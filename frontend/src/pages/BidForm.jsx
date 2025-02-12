@@ -2,10 +2,15 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import io from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
+
+const socket = io('http://localhost:5000');
 
 const BidForm = () => {
 	const { id } = useParams();
-	const [auctionItem, setAuctionItem] = useState(null);
+	const { user } = useAuth()
+	const [ auctionItem, setAuctionItem] = useState(null);
 	const [bidAmount, setBidAmount] = useState("");
 	const [bids, setBids] = useState([]);
 	const [error, setError] = useState("");
@@ -31,38 +36,49 @@ const BidForm = () => {
 				setBids(sortedBids);
 			} catch (error) {
 				console.error("Error fetching bids:", error);
-			} finally {
-				setLoadingBids(false);
 			}
 		};
 
 		fetchBids();
 	}, [id]);
 
-	const highestBid =
-		bids.length > 0 ? Math.max(...bids.map((bid) => bid.bidAmount)) : 0;
+	const highestBid = bids.length > 0 ? Math.max(...bids.map((bid) => bid.bidAmount)) : 0;
 
-	const handleBid = async (e) => {
+	// const handleBid = async (e) => {
+	// 	e.preventDefault();
+	// 	if(bidAmount<highestBid) return(
+	// 		setError("your bid amount is lessthan the current highest bid!!")
+	// 		)
+	// 	try {
+	// 		const token = document.cookie
+	// 			.split("; ")
+	// 			.find((row) => row.startsWith("jwt="))
+	// 			?.split("=")[1];
+	// 		await axios.post(
+	// 			"/api/bids",
+	// 			{ auctionItemId: id, bidAmount },
+	// 			{ headers: { Authorization: `Bearer ${token}` } }
+	// 		);
+	// 		navigate(`/auction/${id}`);
+	// 	} catch (err) {
+	// 		console.error(err);
+	// 	}
+	// };
+
+	const handleBidSubmit = (e) => {
 		e.preventDefault();
-		if(bidAmount<highestBid) return(
+		if (bidAmount < highestBid) return (
 			setError("your bid amount is lessthan the current highest bid!!")
-			)
+		)
 		try {
-			const token = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("jwt="))
-				?.split("=")[1];
-			await axios.post(
-				"/api/bids",
-				{ auctionItemId: id, bidAmount },
-				{ headers: { Authorization: `Bearer ${token}` } }
-			);
+			const userId = user._id; // Retrieve current user ID
+			socket.emit('placeBid', { auctionItemId: id, bidAmount, userId });
 			navigate(`/auction/${id}`);
-		} catch (err) {
+		} catch (error) {
 			console.error(err);
 		}
-	};
 
+	};
 	if (!auctionItem) return <div>Loading...</div>;
 
 	return (
@@ -86,7 +102,7 @@ const BidForm = () => {
 					{highestBid}birr
 				</p>
 			</div>
-			<form onSubmit={handleBid} className="space-y-4">
+			<form onSubmit={handleBidSubmit} className="space-y-4">
 				<div>
 					<label className="block mb-2 text-lg font-medium text-gry-700">
 						Bid Amount

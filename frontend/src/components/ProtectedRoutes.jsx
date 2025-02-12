@@ -9,7 +9,7 @@ const ProtectedRoute = ({ allowedRole }) => {
 		.split("; ")
 		.find((row) => row.startsWith("jwt="))
 		?.split("=")[1];
- 
+
 	return (
 		!token
 			? <Navigate to="/login" state={{ from: location }} replace />

@@ -16,11 +16,15 @@ const {
 	refresh,
 	deleteUser,
 	rejectUser,
-	acceptPayment,
+	updateProfile,
+	finallPayment,
+	cpoPayment,
+	verifyTransaction,
 } = require("../controllers/userController");
 
 const router = express.Router();
 const  authMiddleware  = require("../middleware/authMiddleware");
+const { verify } = require("jsonwebtoken");
 
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => cb(null, "./uploads"),
@@ -38,7 +42,9 @@ router.post("/complete-registration/:id",upload.fields([
 router.post("/login", loginUser);
 router.post("/refresh", refresh);
 router.post("/profile", getProfile);
-router.post("/accept-payment", acceptPayment);
+router.post("/final-payment", finallPayment);
+router.post("/cpo-payment", cpoPayment);
+router.post("/verifyTransaction", verifyTransaction);
 router.get("/users", getUsers);
 router.get("/count", userCount);
 router.post("/approve/:id", userApprove);
@@ -48,5 +54,10 @@ router.post("/logout", logoutUser);
 router.post("/complaints", userComplaint);
 router.post("/complaint", fetchComplaint);
 router.delete("/delete/:id",authMiddleware, deleteUser);
+router.put("/update/:id", upload.fields([
+	{ name: "idImage", maxCount: 1 },
+	{ name: "taxCertificate", maxCount: 1 },
+	{ name: "businessLicense", maxCount: 1 },
+  ]),updateProfile); 
 
 module.exports = router;

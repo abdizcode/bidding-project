@@ -35,15 +35,16 @@ const Bids = () => {
         fetchBids()
     }, [])
 
-    const handlePageChange = (page, type) => {
+    const handlePageChange = (page) => {
         if (page > 0) {
-            if (type === "auctions") {
-                if (page <= totalPagesAuctions) setCurrentPageAuctions(page);
-            } else if (type === "bids") {
-                if (page <= totalPagesBids) setCurrentPageBids(page);
-            } else if (type === "won") {
-                if (page <= totalPagesWon) setCurrentPageWon(page);
-            }
+            if (page <= totalPagesBids) setCurrentPageBids(page);
+            // if (type === "auctions") {
+            //     if (page <= totalPagesAuctions) setCurrentPageAuctions(page);
+            // } else if (type === "bids") {
+                
+            // } else if (type === "won") {
+            //     if (page <= totalPagesWon) setCurrentPageWon(page);
+            // }
         }
     };
 
@@ -53,19 +54,19 @@ const Bids = () => {
 
     return (
         <div className='p-5'>
-            <div className="mt-4">
-                <h2 className="mb-8 text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-indigo-500 to-purple-600">
+            <div className="">
+                <h2 className="sm:mb-5 my-3 sm:text-3xl text-xl font-extrabold text-gray-700">
                     Your Bids
                 </h2>
 
                 {paginatedBids.length ? (
-                    <div className="flex gap-6 flex-col h-[60vh]">
+                    <div className="flex gap-3 flex-col sm:h-[60vh]">
                         {paginatedBids.map((bid) => (
                             <div
                                 key={bid._id}
-                                className="overflow-hidden w-full rounded-lg shadow-md bg-gradient-to-br from-gray-800 to-gray-900 hover:shadow-xl "
+                                className="w-full rounded-lg shadow-md bg-gradient-to-br from-gray-800 to-gray-900 hover:shadow-xl "
                             >
-                                <div className="p-4 py-2 flex flex-col lg:flex-row justify-between lg:items-center">
+                                <div className="p-3 py-2 flex flex-col lg:flex-row justify-between lg:items-center">
                                     <div className="lg:w-20 w-full overflow-hidden rounded-lg bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
                                         <img src={`http://localhost:5000/images/${bid.auctionItem.itemImage}`} alt="" className="lg:h-14 w-full lg:w-20 h-40" />
                                     </div>
@@ -77,7 +78,7 @@ const Bids = () => {
                                             Bid Amount:
                                         </span>{" "}
                                         <span className="font-bold text-green-400">
-                                            ${bid.bidAmount}
+                                            {bid.bidAmount}birr
                                         </span>
                                     </p>
                                     <p className="mb-4">

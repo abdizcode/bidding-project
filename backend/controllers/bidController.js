@@ -2,52 +2,49 @@ const Bid = require("../models/Bid");
 const AuctionItem = require("../models/AuctionItem");
 const jwt = require("jsonwebtoken");
 
-const placeBid = async (req, res) => {
-	const { auctionItemId, bidAmount } = req.body;
-	const userId = req.user.id;
+const placeBid = async (io, socket, data) => {
+    const { auctionItemId, bidAmount, userId } = data;
 
 	if (!auctionItemId || !bidAmount || bidAmount <= 0) {
-		return res.status(400).json({ message: "Invalid bid details" });
-	}
+        socket.emit('bidError', { message: "Invalid bid details" });
+        return;
+    }
 
-	try {
-		const auctionItem = await AuctionItem.findById(auctionItemId);
+    try {
+        const auctionItem = await AuctionItem.findById(auctionItemId);
+        if (!auctionItem) {
+            socket.emit('bidError', { message: "Auction item not found" });
+            return;
+        }
 
-		if (!auctionItem) {
-			return res.status(404).json({ message: "Auction item not found" });
-		}
+        if (bidAmount < auctionItem.startingBid) {
+            socket.emit('bidError', {
+                message: "Bid amount must be greater than or equal to the starting bid",
+            });
+            return;
+        }
 
-		if (bidAmount < auctionItem.startingBid) {
-			return res.status(400).json({
-				message:
-					"Bid amount must be greater than or equal to the starting bid",
-			});
-		}
+        let bid = await Bid.findOne({ auctionItemId, userId });
+        if (bid) {
+            if (bid.bidAmount < bidAmount) {
+                bid.bidAmount = bidAmount;
+                await bid.save();
+            } else {
+                socket.emit('bidError', {
+                    message: "New bid must be higher than the current bid",
+                });
+                return;
+            }
+        } else {
+            bid = await Bid.create({ auctionItemId, userId, bidAmount });
+        }
 
-		let bid = await Bid.findOne({ auctionItemId, userId });
-
-		if (bid) {
-			if (bid.bidAmount < bidAmount) {
-				bid.bidAmount = bidAmount;
-				await bid.save();
-				return res.status(200).json(bid);
-			} else {
-				return res.status(400).json({
-					message: "New bid must be higher than the current bid",
-				});
-			}
-		}
-
-		const newBid = await Bid.create({
-			auctionItemId,
-			userId,
-			bidAmount,
-		});
-
-		res.status(201).json(newBid);
-	} catch (error) {
-		res.status(500).json({ message: error.message });
-	}
+        const bidHistory = await Bid.find({ auctionItemId }).populate("userId", "username");
+        io.emit('newBid', { auctionItemId, bids: bidHistory });
+    } catch (error) {
+        console.error("Error placing bid:", error.message);
+        socket.emit('bidError', { message: error.message });
+    }
 };
 
 const getBidHistory = async (req, res) => {

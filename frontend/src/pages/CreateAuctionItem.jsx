@@ -76,7 +76,7 @@ const CreateAuctionItem = () => {
 						<form onSubmit={handleSubmit}>
 							{/* Image Upload for id Field */}
 							<div className="lg:flex justify-b gap-10">
-								<div className="w-1/2">
+								<div className="md:w-1/2">
 									<div >
 										<p className="pb-2">Upload your auction item Image</p>
 										<label htmlFor="image">
@@ -120,7 +120,7 @@ const CreateAuctionItem = () => {
 										/>
 									</div>
 								</div>
-								<div className="w-1/2">
+								<div className="md:w-1/2">
 									<div className="mb-4">
 										<label
 											htmlFor="description"

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { GrList } from "react-icons/gr";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { FaBell, FaPlusCircle } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const NavBar = () => {
 	const { user } = useAuth();
@@ -46,7 +47,7 @@ const NavBar = () => {
 		<nav className="bg-gray-900 bg-opacity-70 backdrop-blur-md p-3 shadow-lg w-full px-10">
 			<div className="contain mx-auto flex items-center  justify-between">
 				<Link className="text-xl font-bold text-yellow-500 " to={user?.role === 'Admin' ? "/admin" : "/profile"}>
-					{user?.role === 'Admin' ? "Admin" : "Ethio Bidding System"}
+					{user?.role === 'Admin' ? "Admin" : "Online Bidding System"}
 				</Link>
 				<div>
 					<button
@@ -207,19 +208,19 @@ const NavBar = () => {
 									<li className="">
 										<Link
 											className="hover:text-gray-300 px-2 flex items-center justify-between"
-											to="/userNotification"
+											to={user.role==="Admin"?`/admin/notification`: "/userNotification"}
 										>
 											<FaBell color="white" size={20} />
 										</Link>
 									</li>
-									<li className="">
+									{user.role != "Admin" && <li className="">
 										<button
 											className="hover:text-gray-300 flex items-center justify-between"
 											onClick={handleCreate}
 										>
 											<FaPlusCircle color="white" size={20} />
 										</button>
-									</li>
+									</li>}
 								</div>
 							)}
 						</ul>
@@ -392,7 +393,7 @@ const NavBar = () => {
 							<li className="">
 								<Link
 									className="hover:text-gray-300 flex items-center justify-between"
-									to="/userNotification"
+									to={user.role==="Admin"?`/admin/notification`: "/userNotification"}
 								>
 									<FaBell color="white" size={20} />
 								</Link>

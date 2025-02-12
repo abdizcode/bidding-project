@@ -59,6 +59,7 @@ const UserDetail = () => {
       const res = await axios.post(`/api/users/approve/${id}`);
       if (res.status === 200) {
         toast.success("user approval successfull")
+        navigate("/admin/users");
         console.log()
       }
     } catch (error) {
@@ -78,46 +79,49 @@ const UserDetail = () => {
   const reject = async () => {
     try {
       await axios.post(`/api/users/reject/${id}`, { reason });
-      toast.success("user deleted successfuly!!")
+      toast.success("user rejected successfuly!!")
       navigate("/admin/users");
     } catch (error) {
-      console.error("Error deleting auction item:", error);
+      console.error("Error rejecting auction item:", error);
     }
   };
 
   return (
-    <div className='h-scree bg-nature p-5 w-full text-white'>
-      <div className='flex gap-2'>
+    <div className='bg-nature p-5 w-full text-whit'>
+      <div className='flex gap-3 md:gap-6'>
         <div className="w-[35%]">
           <p className='text-yellow'>National ID Image</p>
           <img src={user?.idImage?.filename
-            ? `http://localhost:5000/images/${user.idImage.filename}`
+            ? `http://localhost:5000/images/${user?.idImage?.filename}`
             : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-96 w-full  object-fit object-center group-hover:opacity-75" />
+            className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
+            <a href={`http://localhost:5000/images/${user?.idImage?.filename}`} target="_blank" className="text-blue-400">View Image</a>
         </div>
         <div className="flex flex-col w-[35%]">
           <p className='text-yellow'>Tax certificate Image</p>
           <img src={user?.taxCertificate?.filename
-            ? `http://localhost:5000/images/${user.taxCertificate.filename}`
+            ? `http://localhost:5000/images/${user?.taxCertificate?.filename}`
             : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-96 w-full  object-fit object-center group-hover:opacity-75" />
+            className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
+            <a href={`http://localhost:5000/images/${user?.taxCertificate?.filename}`} target="_blank" className="text-blue-400">View Image</a>
         </div>
         <div className="flex flex-col w-[35%]">
           <p className='text-yellow'>Business Licence Image</p>
           <img src={user?.businessLicense?.filename
-            ? `http://localhost:5000/images/${user.businessLicense.filename}`
+            ? `http://localhost:5000/images/${user?.businessLicense?.filename}`
             : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-96 w-full  object-fit object-center group-hover:opacity-75" />
+            className="h-48 w-  object-fit object-center group-hover:opacity-75" />
+            <a href={`http://localhost:5000/images/${user?.businessLicense?.filename}`} target="_blank" className="text-blue-400">View Image</a>
         </div>
       </div>
       <div>
         <div className="flex flex-col justify-center">
-          <h1 className="text-xl font-semibold text-white mb-4"><strong>Name:</strong> {user?.username || 'Loading...'}</h1>
-          <h1 className="text-lg font-semibold text-white mb-4"><strong>Email:</strong> {user?.email}</h1>
-          <p className="text-lg font- text-gray-100 mb-6"><strong>TIN Number: </strong>{user?.tin}</p>
-          <p className="text-lg font- text-gray-100 mb-6"><strong>Created At:</strong> {user?.createdAt}</p>
-          <p className="text-lg font- text-gray-100 mb-6"><strong>Phone Number:</strong> {user?.phone}</p>
-          <p className="text-lg font- text-gray-100 mb-6"><strong>Address:</strong> {user?.address}</p>
+          <h1 className="text-xl font-semibold text-gray-700 mb-4"><strong>Name:</strong> {user?.username || 'Loading...'}</h1>
+          <h1 className="text-lg font-semibold text-gray-700 mb-4"><strong>Email:</strong> {user?.email}</h1>
+          <p className="text-lg font- text-gray-700 mb-6"><strong>TIN Number: </strong>{user?.tin}</p>
+          <p className="text-lg font- text-gray-700 mb-6"><strong>Created At:</strong> {user?.createdAt}</p>
+          <p className="text-lg font- text-gray-700 mb-6"><strong>Phone Number:</strong> {user?.phone}</p>
+          <p className="text-lg font- text-gray-700 mb-6"><strong>Address:</strong> {user?.address}</p>
 
           {/* Add to Cart Button */}
           <div className='flex gap-2'>

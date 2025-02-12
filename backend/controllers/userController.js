@@ -7,6 +7,7 @@ const Complaint = require("../models/Complaint");
 const AuctionItem = require("../models/AuctionItem");
 const Notification = require("../models/Notification");
 const Bid = require("../models/Bid");
+const Account = require('../models/Account');
 
 const registerUser = async (req, res) => {
 	const { username, email, password, confirmPassword } = req.body;
@@ -35,11 +36,7 @@ const registerUser = async (req, res) => {
 			password: hashedPassword,
 		});
 
-		res.status(201).json({
-			id: user._id,
-			username: user.username,
-			email: user.email,
-		});
+		res.status(201).json({});
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}
@@ -97,20 +94,7 @@ const getProfile = async (req, res) => {
 			return res.status(404).json({ message: "User not found" });
 		}
 
-		res.status(200).json({
-			id: user._id,
-			username: user.username,
-			email: user.email,
-			role: user.role,
-			phone: user.phone,
-			createdAt: user.createdAt,
-			tin: user.tin,
-			taxCertificate: user.taxCertificate,
-			businessLicense: user.businessLicense,
-			isApproved: user.isApproved,
-			isFullyRegistered: user.isFullyRegistered,
-			idImage: user.idImage,
-		});
+		res.status(200).json({ user });
 	} catch (error) {
 		res.status(500).json({ message: error.message });
 	}
@@ -152,6 +136,7 @@ const completeRegister = async (req, res) => {
 		await user.save();
 
 		res.status(200).json({ message: "User registration completed", user });
+		console.log("user User registration completed")
 	} catch (error) {
 		res.status(500).json({ message: "Error completing registration", error });
 		console.log(error)
@@ -316,44 +301,197 @@ const deleteUser = async (req, res) => {
 	}
 };
 
-const acceptPayment = async (req, res) =>{
-	const {
-		amount, currency, email, first_name, last_name, phone_number, tx_ref,
-	  } = req.body;
-	
-	  const payload = {
-		amount,
-		currency,
-		email,
-		first_name,
-		last_name,
-		phone_number,
-		tx_ref,
-		callback_url: 'http://localhost:5173/about',
-		return_url: 'http://localhost:5173/auctions',
-		customization: {
-		  title: 'Payment for your service',
-		  description: 'Payment description',
-		},
-	  };
-	
-	  try {
-		const response = await axios.post(
-		  'https://api.chapa.co/v1/transaction/initialize',
-		  payload,
-		  {
-			headers: {
-			  Authorization: `Bearer ${process.env.CHAPA_AUTH_KEY}`,
-			  'Content-Type': 'application/json',
-			},
-		  }
-		);
-		res.json(response.data);
-	  } catch (error) {
-		console.log(error)
-		res.status(500).json({ error: 'Payment initialization failed on backend' });
-	  }
+const updateProfile = async (req, res) => {
+	try {
+		const userId = req.params.id;
+		const { username, email, phone, address, tinNumber } = req.body;
+
+		// Build updated user data
+		let updatedData = {
+			username,
+			email,
+			phone,
+			address,
+			tin: tinNumber,
+			resubmited: true,
+			approvalStatus: "pending",
+		};
+
+		// Attach new files if uploaded
+		if (req.files) {
+			if (req.files.idImage) updatedData.idImage = `/uploads/${req.files.idImage.filename}`;
+			if (req.files.taxCertificate) updatedData.taxCertificate = `/uploads/${req.files.taxCertificate.filename}`;
+			if (req.files.businessLicense) updatedData.businessLicense = `/uploads/${req.files.businessLicense.filename}`;
+		}
+
+		// Update user in database
+		const updatedUser = await User.findByIdAndUpdate(userId, updatedData, { new: true });
+
+		if (!updatedUser) return res.status(404).json({ message: "User not found" });
+
+		res.json({ message: "Profile updated successfully", user: updatedUser });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Server error" });
+	}
 }
+
+const finallPayment = async (req, res) => {
+	try {
+		const {
+			amount, currency, email, first_name, last_name, phone_number, tx_ref, auctionId
+		} = req.body;
+
+		console.log(req.body);
+		const response = await fetch("https://api.chapa.co/v1/transaction/initialize", {
+			method: "POST",
+			headers: {
+				"Authorization": `Bearer ${process.env.CHAPA_AUTH_KEY}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				"amount": parseInt(amount ? amount : 232),
+				"currency": currency,
+				"email": email,
+				"first_name": first_name,
+				"last_name": last_name,
+				"phone_number": phone_number,
+				"tx_ref": tx_ref,
+				"callback_url": "http://localhost:5173/about",
+				"return_url": new URL(`http://localhost:5173/paymentsuccess/${tx_ref}?aucId=${auctionId}`).href,
+				"customization": {
+					"title": "Payment for",
+					"description": "Service Payment"
+				}
+			})
+		})
+
+		//to save the payment to the user
+
+		const result = await response.json();
+
+		return res.json(result);
+
+	} catch (error) {
+		console.log(error.message)
+		res.status(500).json({ error: 'Payment initialization failed on backend' });
+	}
+}
+const cpoPayment = async (req, res) => {
+	try {
+		const { bidAmount, aucId, userId } = req.body;
+		console.log(bidAmount);
+		const user = await User.findById(userId);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		if (user.balance < bidAmount) {
+			return res.status(400).json({ message: "Insufficient balance" });
+		}
+		const cpoAccount = await Account.findOne({ auctionId: aucId });
+		if (cpoAccount) {
+			cpoAccount.amount += bidAmount;
+			await cpoAccount.save();
+		} else {
+			await Account.create({
+				auctionId: aucId,
+				amount: bidAmount,
+				userId: userId,
+				payedFor: "cpo",
+			});
+		}
+		user.balance -= bidAmount;
+		await user.save();
+		await User.findOneAndUpdate(
+			{ userId },
+			{
+				$push: {
+					payments: {
+						auctionId: aucId,
+						amount: bidAmount,
+						payedFor: "cpo",
+						createdAt: new Date(),
+					},
+				},
+			}
+		);
+
+
+		// if (result.status === "success") {
+		// 	// Save payment in user record
+		// 	await User.findOneAndUpdate(
+		// 		{ email: email },
+		// 		{
+		// 			$push: {
+		// 				payments: {
+		// 					auctionId: aucId,
+		// 					amount,
+		// 					payedFor: "cpo",
+		// 					createdAt: new Date(),
+		// 				},
+		// 			},
+		// 		}
+		// 	);
+		// }
+
+		return res.json({ message: "Payment successful" });
+
+	} catch (error) {
+		console.log(error.message)
+		res.status(500).json({ error: 'Payment initialization failed on backend' });
+	}
+}
+
+const verifyTransaction = async (req, res) => {
+    try {
+        const { tx_ref, auctionId } = req.body;
+        console.log(tx_ref);
+
+        const response = await fetch(`https://api.chapa.co/v1/transaction/verify/${tx_ref}`, {
+        	method: "GET",
+            headers: {
+                "Authorization": `Bearer ${process.env.CHAPA_AUTH_KEY}`,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        if (result.status === "success") {
+            // Check if the payment already exists
+            const user = await User.findOne({ email: result.data.email });
+            const existingPayment = user.payments.find(payment => payment.tx_ref === tx_ref);
+
+            if (!existingPayment) {
+                // Save payment in user record
+                console.log("saving to the database");
+                await User.findOneAndUpdate(
+                    { email: result.data.email },
+                    {
+						$push: {
+                            payments: {
+                                auctionId: auctionId,
+                                amount: result.data.amount,
+                                payedFor: "cpo",
+                                createdAt: new Date(),
+                                tx_ref: tx_ref, // Add tx_ref to the payment object
+                            },
+                        },
+                    }
+                );
+            } else {
+                console.log("Payment already exists in the database");
+            }
+        }
+        console.log("transaction verify successful");
+        return res.json(result);
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: 'Payment verification failed on backend' });
+    }
+};
 
 module.exports = {
 	registerUser,
@@ -370,5 +508,8 @@ module.exports = {
 	refresh,
 	deleteUser,
 	rejectUser,
-	acceptPayment
+	updateProfile,
+	finallPayment,
+	cpoPayment,
+	verifyTransaction,
 };

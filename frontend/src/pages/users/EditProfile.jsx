@@ -1,18 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-toastify";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ProfileEdit = () => {
-    const {user} = useAuth()
+  const { user } = useAuth();
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    address: "",
-    tinNumber: "",
-    idImage: null,
-    taxCertificate: null,
-    businessLicense: null,
+    username: user?.username || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    tinNumber: user?.tin || "",
+    idImage: user?.idImage || null,
+    taxCertificate: user?.taxCertificate || null,
+    businessLicense: user?.businessLicense || null,
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        tinNumber: user.tin || "",
+        idImage: user.idImage || null,
+        taxCertificate: user.taxCertificate || null,
+        businessLicense: user.businessLicense || null,
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,16 +44,49 @@ const ProfileEdit = () => {
     setFormData({ ...formData, [name]: e.target.files[0] });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission logic here
-    console.log("Form Data Submitted:", formData);
-  };
-
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+    
+      const submitData = new FormData();
+      submitData.append("username", formData.username);
+      submitData.append("email", formData.email);
+      submitData.append("phone", formData.phone);
+      submitData.append("address", formData.address);
+      submitData.append("tinNumber", formData.tinNumber);
+    
+      if (formData.idImage instanceof File) {
+        submitData.append("idImage", formData.idImage);
+      }
+      if (formData.taxCertificate instanceof File) {
+        submitData.append("taxCertificate", formData.taxCertificate);
+      }
+      if (formData.businessLicense instanceof File) {
+        submitData.append("businessLicense", formData.businessLicense);
+      }
+    
+      try {
+        const response = await fetch(`/api/users/update/${user._id}`, {
+          method: "PUT",
+          body: submitData,
+        });
+    
+        if (!response.ok) throw new Error("Failed to update profile");
+    
+        const data = await response.json();
+        toast.success("Profile updated successfully!");
+        navigate("/profile");
+      } catch (error) {
+        console.error(error);
+        alert("Error updating profile.");
+      }
+    };   
+    
   return (
     <div className="max-w-2xl m-4 lg:mx-auto text-white bg-gray-800 shadow-md rounded-md p-6">
       <h2 className="text-2xl font-semibold mb-6 text-center">Edit Profile</h2>
-      <h3 className="mb-4">Your profile issue: <span className="text-red-600 font-semibold">{user.rejectionReason}</span></h3>
+      <h3 className="mb-4">
+        Your profile issue: <span className="text-red-600 font-semibold">{user.rejectionReason}</span>
+      </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Username */}
         <div>
@@ -46,7 +99,7 @@ const ProfileEdit = () => {
             name="username"
             value={formData.username}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm"
           />
         </div>
 
@@ -61,7 +114,7 @@ const ProfileEdit = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm"
           />
         </div>
 
@@ -76,7 +129,7 @@ const ProfileEdit = () => {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm"
           />
         </div>
 
@@ -90,7 +143,7 @@ const ProfileEdit = () => {
             name="address"
             value={formData.address}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm"
           />
         </div>
 
@@ -105,7 +158,7 @@ const ProfileEdit = () => {
             name="tinNumber"
             value={formData.tinNumber}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            className="w-full px-4 py-2 bg-gray-500 border-gray-300 rounded-md shadow-sm"
           />
         </div>
 
@@ -122,6 +175,11 @@ const ProfileEdit = () => {
             onChange={handleFileChange}
             className="w-full border-gray-300 rounded-md shadow-sm"
           />
+          {formData.idImage && (
+            <p className="mt-2">
+              Current: <a href={formData.idImage} target="_blank" className="text-blue-400 underline">View File</a>
+            </p>
+          )}
         </div>
 
         {/* Tax Certificate */}
@@ -137,6 +195,11 @@ const ProfileEdit = () => {
             onChange={handleFileChange}
             className="w-full border-gray-300 rounded-md shadow-sm"
           />
+          {formData.taxCertificate && (
+            <p className="mt-2">
+              Current: <a href={formData.taxCertificate} target="_blank" className="text-blue-400 underline">View File</a>
+            </p>
+          )}
         </div>
 
         {/* Business License */}
@@ -152,6 +215,11 @@ const ProfileEdit = () => {
             onChange={handleFileChange}
             className="w-full border-gray-300 rounded-md shadow-sm"
           />
+          {formData.businessLicense && (
+            <p className="mt-2">
+              Current: <a href={formData.businessLicense} target="_blank" className="text-blue-400 underline">View File</a>
+            </p>
+          )}
         </div>
 
         {/* Submit Button */}

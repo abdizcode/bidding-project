@@ -39,7 +39,7 @@ const UserNotification = () => {
   }
   return (
     <div className="p-4 min-h-screen">
-      <h2 className="text-xl font-semibold mb-4 text-white">Notification</h2>
+      <h2 className="text-xl font-semibold mb-4">Notification</h2>
       {notifications.length > 0 ? (
         <ul className="space-y-2">
           {notifications.map((notification) => (

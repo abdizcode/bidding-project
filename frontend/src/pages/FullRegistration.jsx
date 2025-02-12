@@ -9,14 +9,21 @@ const FullRegistration = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
 
+    useEffect(()=>{
+        if(user.isFullyRegistered){
+            toast.warning("you are already fully registered")
+            navigate("/profile")
+        }
+    })
+
     const [form, setForm] = useState({ phone: "", address: "" });
     const [files, setFiles] = useState({});
 
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
     const handleFileChange = (e) => setFiles({ ...files, [e.target.name]: e.target.files[0] });
 
-    const handleSubmit = async () => {
-        event.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         const formData = new FormData();
         const id = user._id
         formData.append("idImage", files.idImage);
@@ -40,10 +47,10 @@ const FullRegistration = () => {
             toast.error(error)
             console.error(error);
         }
-    };
+    }
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-gray-800 text-white shadow-md rounded-lg mt-8">
+        <div className="max-w-2xl md:mx-auto p-6 bg-gray-800 text-white shadow-md rounded-lg mx-2 mt-8">
             <h2 className="text-2xl font-semibold mb-4 text-center">Complete your registration</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">

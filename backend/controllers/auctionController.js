@@ -3,6 +3,63 @@ const Bid = require("../models/Bid");
 const User = require("../models/User");
 const Notification = require("../models/Notification")
 const jwt = require("jsonwebtoken");
+const AuctionResult = require("../models/AuctionResult");
+
+async function scheduleAuctionEnd(auction) {
+    try {
+        const timeUntilEnd = new Date(auction.endDate) - new Date();
+
+        if (timeUntilEnd > 0) {
+            console.log(`Scheduling auction ${auction._id} to end in ${timeUntilEnd / 1000} seconds`);
+
+            setTimeout(async () => {
+                try {
+                    const bids = await Bid.find({ auctionItemId: auction._id }).sort({ bidAmount: -1 });
+                    console.log(`Auction ${auction._id} ended! Processing winner...`);
+
+                    if (bids.length === 0) {
+                        console.log(`No bids found for auction ${auction._id}`);
+                        return;
+                    }
+
+                    let winners;
+                    if (bids.length >= 3) {
+                        const topBids = bids.slice(0, 3);
+                        winners = topBids.map((bid) => ({
+                            userId: bid.userId,
+                            amount: bid.bidAmount,
+                            status: "pending",
+                        }));
+                    } else {
+                        winners = bids.map((bid) => ({
+                            userId: bid.userId,
+                            amount: bid.bidAmount,
+                            status: "pending",
+                        }));
+                    }
+
+                    // Create an AuctionResult document
+                    const auctionResult = new AuctionResult({
+                        auctionId: auction._id,
+                        winners,
+                        currentWinnerIndex: 0,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    });
+
+                    await auctionResult.save();
+                    console.log(`Auction ${auction._id} results stored successfully:`, auctionResult);
+                } catch (error) {
+                    console.error(`Error processing auction ${auction._id} end:`, error);
+                }
+            }, timeUntilEnd);
+        } else {
+            console.log(`Auction ${auction._id} has already ended.`);
+        }
+    } catch (error) {
+        console.error("Error scheduling auction end:", error);
+    }
+}
 
 const createAuctionItem = async (req, res) => {
 	const { title, address, description, startingBid, endDate } = req.body;
@@ -27,7 +84,7 @@ const createAuctionItem = async (req, res) => {
 			type: 'your auction is set',
 			isRead: false,
 		})
-		
+
 		const bidders = await User.find({ isApproved: true, _id: { $ne: userId } });
 		const notifications = bidders.map((bidder) => ({
 			userId: bidder._id,
@@ -38,7 +95,10 @@ const createAuctionItem = async (req, res) => {
 
 		await Notification.insertMany(notifications);
 
+		scheduleAuctionEnd(auctionItem);
 		res.status(201).json(auctionItem);
+		console.log("succesfull");
+
 	} catch (error) {
 		console.log(error)
 		res.status(500).json({ message: error.message });
@@ -120,7 +180,7 @@ const updateAuctionItem = async (req, res) => {
 const deleteAuctionItem = async (req, res) => {
 	const { id } = req.params;
 	const userId = req.user.id;
-
+ 
 	try {
 		const auctionItem = await AuctionItem.findById(id);
 
@@ -161,11 +221,61 @@ const getAuctionWinner = async (req, res) => {
 				.json({ winner: "", message: "Auction has not ended yet" });
 		}
 
-		const bids = await Bid.find({ auctionItemId: id });
+		const bids = await Bid.find({ auctionItemId: id }).sort({ bidAmount: -1 });
 		if (bids.length === 0) {
 			return res
 				.status(200)
 				.json({ winner: "", message: "No bids found" });
+		}
+
+		const isauctionResult = await AuctionResult.find({ auctionId: id })
+
+		if (isauctionResult.length === 0) {
+
+			if (bids.length >= 3) {
+				const topBids = await Bid.find({ auctionItemId: id })
+					.sort({ bidAmount: -1 }) // Sort by bid amount in descending order
+					.limit(3); // Get top 3 bids
+
+				console.log(topBids)
+				const winners = topBids.map((bid) => ({
+					userId: bid.userId,
+					amount: bid.bidAmount,
+					status: "pending", // Default status for all winners
+				}));
+
+				// Set the first winner's status to pending
+				winners[0].status = "pending";
+
+				// Create an AuctionResult document
+				const auctionResult = new AuctionResult({
+					auctionId: id,
+					winners,
+					currentWinnerIndex: 0, // Start with the first winner
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+
+				await auctionResult.save();
+
+				console.log("Top three bidders stored successfully:", auctionResult);
+			} else {
+				const winners = bids.map((bid) => ({
+					userId: bid.userId,
+					amount: bid.bidAmount,
+					status: "pending", // Default status for all winners
+				}));
+				const auctionResult = new AuctionResult({
+					auctionId: id,
+					winners,
+					currentWinnerIndex: 0, // Start with the first winner
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+				await auctionResult.save();
+				console.log("less than three bidders stored successfully:", auctionResult);
+			}
+
 		}
 
 		let highestBid = bids.reduce(

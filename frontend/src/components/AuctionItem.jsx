@@ -2,26 +2,32 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import io from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 
 const ITEMS_PER_PAGE = 10;
 
+const socket = io('http://localhost:5000');
+
 function AuctionItem() {
 	const { id } = useParams();
+	const { user } = useAuth();
 	const navigate1 = useNavigate()
 	const [auctionItem, setAuctionItem] = useState(null);
-	const [user, setUser] = useState(null);
-	const [bidAmount, setBidAmount] = useState("")
+	
 	const [bids, setBids] = useState([]);
 	const [winner, setWinner] = useState("");
+	const [payment, setPayment] = useState(null);
 	const [countdown, setCountdown] = useState({
 		days: 0,
 		hours: 0,
 		minutes: 0,
 		seconds: 0,
 	});
+	const [isCountdownEnded, setIsCountdownEnded] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(0);
-	const [loadingBids, setLoadingBids] = useState(true);
+	const [loadingBids, setLoadingBids] = useState(false);
 	const navigate = useNavigate();
 
 	const calculateBidCpo = (amounts) => {
@@ -29,58 +35,40 @@ function AuctionItem() {
 	}
 
 	useEffect(() => {
-		const fetchAuctionItem = async () => {
-			try {
-				const res = await axios.get(`/api/auctions/${id}`);
-				setAuctionItem(res.data);
-				const result = calculateBidCpo(res.data.startingBid)
-				setBidAmount(result);
-			} catch (error) {
-				console.error("Error fetching auction item:", error);
-			}
-		};
-
-		const fetchUser = async () => {
-			const token = document.cookie
-				.split("; ")
-				.find((row) => row.startsWith("jwt="))
-				?.split("=")[1];
-			if (token) {
-				try {
-					const res = await axios.post(
-						"/api/users/profile",
-						{},
-						{
-							headers: { Authorization: `Bearer ${token}` },
-						}
-					);
-					setUser(res.data);
-				} catch (error) {
-					console.error("Error fetching user profile:", error);
-				}
-			}
-		};
 
 		const fetchWinner = async () => {
-			try {
-				const res = await axios.get(`/api/auctions/winner/${id}`);
-				setWinner(res.data.winner);
-			} catch (error) {
-				if (error.response.data.winner !== "") {
-					console.error("Error fetching auction winner:", error);
+			if (isCountdownEnded) {
+				try {
+					const res = await axios.get(`/api/auctions/winner/${id}`);
+					setWinner(res.data.winner);
+				} catch (error) {
+					if (error.response.data.winner !== "") {
+						console.error("Error fetching auction winner:", error);
+					}
 				}
 			}
+
 		};
 
-		fetchAuctionItem();
-		fetchUser();
 		fetchWinner();
-	}, [id]);
+	}, [isCountdownEnded, id])
 
 	useEffect(() => {
-		const fetchBids = async () => {
+		const fetchInitialData = async () => {
 			setLoadingBids(true);
 			try {
+				const auctionRes = await axios.get(`/api/auctions/${id}`);
+				setAuctionItem(auctionRes.data);
+
+				// const userRes = await axios.post("/api/users/profile", {}, {
+				//   headers: { Authorization: `Bearer ${token}` },
+				// });
+				// setUser(userRes.data);
+
+				// const bidsRes = await axios.get(`/api/bids/${id}`);
+				// setBids(bidsRes.data.sort((a, b) => b.bidAmount - a.bidAmount));
+				// Find payment for the given auctionId
+
 				const res = await axios.get(`/api/bids/${id}`);
 				const sortedBids = res.data.sort(
 					(a, b) => b.bidAmount - a.bidAmount
@@ -89,15 +77,43 @@ function AuctionItem() {
 				setTotalPages(
 					Math.ceil(sortedBids.length / ITEMS_PER_PAGE) || 0
 				);
+
+				const auctionPayment = user.payments.find(p => p.auctionId === id);
+				if (auctionPayment) {
+					const cpoPayed = auctionPayment?.payedFor === 'cpo'
+					setPayment(cpoPayed || null);
+				}
 			} catch (error) {
-				console.error("Error fetching bids:", error);
+				console.error("Error fetching initial data:", error);
 			} finally {
 				setLoadingBids(false);
 			}
 		};
 
-		fetchBids();
+		fetchInitialData();
+
+		// Listen for real-time updates
+
+		socket.on("newBid", (newBid) => {
+			console.log('liestenning')
+			if (newBid.auctionItemId === id) {
+				const populatedBids = newBid.bids.map((bid) => ({
+					...bid,
+					userId: bid.userId || { username: "Unknown" }, // Fallback if userId is missing
+				}));
+
+				setBids((prevBids) => {
+					const updatedBids = [...populatedBids, ...prevBids];
+					return updatedBids.sort((a, b) => b.bidAmount - a.bidAmount);
+				});
+			}
+		});
+
+		return () => {
+			socket.off("newBid");
+		};
 	}, [id]);
+
 
 	useEffect(() => {
 		const updateCountdown = () => {
@@ -119,6 +135,7 @@ function AuctionItem() {
 					setCountdown({ days, hours, minutes, seconds });
 				} else {
 					setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+					setIsCountdownEnded(true)
 				}
 			}
 		};
@@ -151,47 +168,43 @@ function AuctionItem() {
 		return <p className="mt-10 text-center text-white">Loading...</p>;
 	}
 
-	const highestBid =
-		bids.length > 0 ? Math.max(...bids.map((bid) => bid.bidAmount)) : 0;
-	const isAuctionEnded =
-		countdown.days <= 0 &&
-		countdown.hours <= 0 &&
-		countdown.minutes <= 0 &&
-		countdown.seconds <= 0;
+	const highestBid = bids.length > 0 ? Math.max(...bids.map((bid) => bid.bidAmount)) : 0;
 
+	const isCurrentUserWinner = winner && user && winner._id === user._id;
+		
 	return (
-		<div className="p-4 mx-auto mt-1 text-white rounded-lg shadow-lg z-[-1]">
+		<div className="p-4 mx-auto mt-1 text-whit rounded-lg shadow-lg z-[-1]">
 			{/* Back Button */}
 			<div className="flex items-center gap-3 mb-2">
 				<button
 					onClick={() => navigate1(-1)} // Go back to the previous page
-					className="space-x- text-gray-300 hover:text-red-800 focus:outline-none"
+					className="space-x- text-gray-700 hover:text-red-800 focus:outline-none"
 				>
 					<FaArrowLeft className="" />
 				</button>
-				<h2 className="text-xl text-start font-bold text-white">
+				<h2 className="text-xl text-start font-bold text-whie">
 					Auction Detail
 				</h2>
 			</div>
 			<hr className="px-5 mb-5" />
-			<div className="flex gap-3 ">
-				<div className="w-2/3">
-					<div className="flex gap-5 mb-8 ">
-						<div className="w-68 mb-4 overflow-hidden rounded-lg bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
+			<div className="md:flex gap-3 ">
+				<div className="md:w-2/3">
+					<div className="flex md:flex-row flex-col gap-5 mb-8 ">
+						<div className="w-68 mb-4 overflow-hidden rounded-lg bg-gray-700 xl:aspect-h-8 xl:aspect-w-7">
 							<img src={`http://localhost:5000/images/${auctionItem.itemImage}`} alt="" className="h-56 w-68" />
 						</div>
 						<div className="border rounded-lg p-3 w-full">
 							<h2 className="mb-4 text-xl font-bold">{auctionItem.title}</h2>
 							<p className="mb-4 ">Description:{" "}
 								<span className="font-semibold">
-								{auctionItem.description}
+									{auctionItem.description}
 								</span>
-								</p>
+							</p>
 							<p className="mb-4 ">Address:{" "}
 								<span className="font-semibold">
 									{auctionItem.address}
-									</span>
-									</p>
+								</span>
+							</p>
 							<p className="mb-4 ">
 								Starting Bid:{" "}
 								<span className="font-semibold">
@@ -207,11 +220,11 @@ function AuctionItem() {
 
 
 					<div
-						className={`text-center mb-2 p-4 rounded-lg shadow-lg ${isAuctionEnded ? "bg-red-600" : "bg-green-600"
+						className={`text-center mb-2 p-4 rounded-lg shadow-lg ${isCountdownEnded ? "bg-red-600" : "bg-green-600"
 							}`}
 					>
 						<h3 className="mb-2 text-xl font-bold">
-							{isAuctionEnded ? "Auction Ended" : "Time Remaining"}
+							{isCountdownEnded ? "Auction Ended" : "Time Remaining"}
 						</h3>
 						<div className="flex justify-center items-center gap-2">
 							{Object.entries(countdown).map(([unit, value]) => (
@@ -225,34 +238,43 @@ function AuctionItem() {
 								</div>
 							))}
 						</div>
-						{isAuctionEnded && winner && (
-							<div className="p-2 mt-4 font-bold text-center text-black bg-yellow-500 rounded-lg">
-								<h3 className="text-2xl">
-									Congratulations {winner.username}!
-								</h3>
-								<p className="text-xl">
-									You are the winner of this auction!
-								</p>
-							</div>
-						)}
-						{isAuctionEnded && !winner && (
-							<div className="p-2 mt-4 font-bold text-center text-black bg-yellow-500 rounded-lg">
-								<h3 className="text-2xl">No Winner !</h3>
+						{isCountdownEnded && (
+							<div>
+								{winner ? (
+									<div className="p-4 mt-4 bg-yellow-500 rounded-lg">
+										{isCurrentUserWinner ? (
+											<>
+												<h3 className="text-2xl font-bold">Congratulations, {user.username}!</h3>
+												<p className="text-xl mb-2">You are the winner of this auction!</p>
+												<Link to={`/payment/${id}`} className="bg-yellow-800 px-2 rounded-lg p-1 mt-1">Procceed To Payment</Link>
+											</>
+										) : (
+											<>
+												<h3 className="text-2xl font-bold">Auction Winner</h3>
+												<p className="text-xl"><span className="text-xl font-bold text-yellow-800">{winner.username}</span> has won the auction.</p>
+											</>
+										)}
+									</div>
+								) : (
+									<div className="p-4 mt-4 bg-yellow-500 rounded-lg">
+										<h3 className="text-2xl font-bold">No Winner</h3>
+									</div>
+								)}
 							</div>
 						)}
 					</div>
 				</div>
-				<div className="border rounded-lg p-2 w-1/3">
+				<div className="border rounded-lg p-2 md:w-1/3">
 					<h3 className="mb-4 text-xl font-bold">Bids</h3>
 					{loadingBids ? (
-						<p className="text-xl text-gray-400">Loading bids...</p>
+						<p className="text-xl text-gray-200">Loading bids...</p>
 					) : paginatedBids.length ? (
 						<div className="mb-6">
 							{paginatedBids.map((bid) => {
 								return (
 									<div
 										key={bid._id}
-										className="p-2 mb-2 bg-gray-700 rounded-lg"
+										className="p-2 mb-2 bg-gray-200 rounded-lg"
 									>
 										<p className="">
 											<span className="font-semibold">
@@ -319,13 +341,13 @@ function AuctionItem() {
 						onClick={handleDelete}
 						className="px-6 py-3 text-white bg-red-700 rounded-lg hover:bg-red-800"
 					>
-						Delete
+						Cancellation
 					</button>
 				</div>
 			)}
-			{auctionItem.createdBy !== user.id && !isAuctionEnded && user.isFullyRegistered && (
+			{auctionItem.createdBy !== user.id && !isCountdownEnded && user.isFullyRegistered && (
 				<Link
-					to={`/auction/bid/${id}`}
+					to={payment?`/auction/bid/${id}`:`/bidCpo/${id}`}
 					className="items-center justify-center block px-6 py-3 mt-6 text-center text-white bg-blue-700 rounded-lg ite hover:bg-blue-800"
 				>
 					Place a Bid

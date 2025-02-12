@@ -20,6 +20,16 @@ const userSchema = mongoose.Schema({
 	idImage: { filename: String, filepath: String, mimetype: String },
 	taxCertificate: { filename: String, filepath: String, mimetype: String },
 	businessLicense: { filename: String, filepath: String, mimetype: String },
+	balance:{type: Number, default: 0},
+	payments: [
+        {
+            auctionId: { type: String, required: true },
+            amount: { type: Number, required: true },
+            payedFor: { type: String, enum: ["addBalance","cpo", "final"], default: "cpo" },
+			createdAt: { type: Date, default: new Date() },
+			tx_ref: { type: String, required: true },
+        },
+    ],
 });
 
 module.exports = mongoose.model("User", userSchema);

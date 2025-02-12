@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -97,6 +98,7 @@ const AuctionDetail = () => {
     const handleDelete = async () => {
         try {
             await axios.delete(`/api/auctions/${id}`);
+            toast.success("Auction item deleted successfully");
             navigate("/auctions");
         } catch (error) {
             console.error("Error deleting auction item:", error);

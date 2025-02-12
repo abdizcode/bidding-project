@@ -43,49 +43,49 @@ function Signup() {
 
 	return (
 		<div className="flex items-center justify-center min-h-screen bg-cover bg-center">
-			<div className="w-full max-w-md p-8 bg-gray-800 bg-opacity-50 rounded-lg shadow-lg">
+			<div className="w-full max-w-md p-8 bg-gray-800 bg-opacity-50 rounded-lg shadow-lg mb-28">
 				<h2 className="mb-6 text-3xl font-semibold text-white text-center">
 					Signup
 				</h2>
 				<form onSubmit={handleSignup} className="space-y-4">
-					<div className="flex items-center border rounded-md border-gray-600 bg-gray-700">
-						<FiUser className="w-6 h-6 text-gray-400 ml-3" />
+					<div className="relative bg-gray-700 rounded-lg">
+						<FiUser className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
 						<input
 							type="text"
-							className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+							className="w-full text-gray-200 bg-gray-700 pl-12 p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 							placeholder="Username"
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
 							required
 						/>
 					</div>
-					<div className="flex items-center border rounded-md border-gray-600 bg-gray-700">
-						<FiMail className="w-6 h-6 text-gray-400 ml-3" />
+					<div className="relative bg-gray-700 rounded-lg">
+						<FiMail className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
 						<input
 							type="email"
-							className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+							className="w-full text-gray-200 bg-gray-700 pl-12 p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 							placeholder="Email"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							required
 						/>
 					</div>
-					<div className="flex items-center border rounded-md border-gray-600 bg-gray-700">
-						<FiLock className="w-6 h-6 text-gray-400 ml-3" />
+					<div className="relative bg-gray-700 rounded-lg">
+						<FiLock className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
 						<input
 							type="password"
-							className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+							className="w-full text-gray-200 bg-gray-700 pl-12 p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 							placeholder="Password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 							required
 						/>
 					</div>
-					<div className="flex items-center border rounded-md border-gray-600 bg-gray-700">
-						<FiLock className="w-6 h-6 text-gray-400 ml-3" />
+					<div className="relative bg-gray-700 rounded-lg">
+						<FiLock className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
 						<input
 							type="password"
-							className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+							className="w-full text-gray-200 bg-gray-700 pl-12 p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
 							placeholder="Confirm Password"
 							value={confirmPassword}
 							onChange={(e) => setConfirmPassword(e.target.value)}
@@ -102,7 +102,7 @@ function Signup() {
 							Already have an account?{" "}
 							<Link
 								to="/login"
-								className="text-indigo-300 hover:underline"
+								className="text-indigo-700 hover:underline"
 							>
 								Login
 							</Link>

@@ -74,9 +74,9 @@ function AuctionList() {
 	const paginatedItems = searchResults.slice(startIndex, endIndex);
 
 	return (
-		<div className="p-4 bg-slate-30 text-white rounded-lg shadow-lg">
-			<div className="flex justify-between">
-				<h2 className="text-2xl font-bold mb-3">Auction Items</h2>
+		<div className="p-4 bg-slate-30 rounded-lg shadow-lg">
+			<div className="flex justify-between items-center">
+				<h2 className="sm:text-2xl text-xl font-bold mb-3">Auction Items</h2>
 				<div className="mb-3 flex flex-col gap-4">
 					<input
 						type="text"
@@ -91,7 +91,7 @@ function AuctionList() {
 			<div>
 				<div className="container mx-auto">
 					<div className="overflow-x-auto">
-						<table className="min-w-full bg-slate-200 border border-gray-200">
+						<table className="min-w-full bg-slate-300 border border-gray-200">
 							<thead>
 								<tr className="bg-cyan-100 border-b border-gray-200">
 									<th className="text-left p-4 font-medium text-gray-700">Product image</th>

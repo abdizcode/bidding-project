@@ -14,7 +14,6 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Profile from './pages/users/Profile'
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import Sidebar from './admin/components/Sidebar'
 import Unauthorized from './components/Unauthorized'
 import Logout from './pages/Logout'
 import Auctions from './admin/pages/Auctions'
@@ -34,6 +33,9 @@ import UserNotification from './pages/users/UserNotification'
 import Images from './components/Images'
 import ProfileEdit from './pages/users/EditProfile'
 import BidCpo from './pages/BidCpo'
+import Payment from './components/Payment'
+import PaymentSuccess from './pages/PaymentSuccess'
+import AddBalance from './components/AddBalance'
 
 
 function App() {
@@ -43,7 +45,7 @@ function App() {
 			
 			{/*  */}
 			{/* ${roles[0] === 'Admin' ? 'flex' : ''} */}
-			<div className={`min-h-screen mx-auto bg-cyan-950`}>
+			<div className={`min-h-screen mx-auto bg-cyan-50`}>
 				{user?.role === 'User' ? <ComplaintForm /> : <></>}
 				<NavBar />
 
@@ -67,13 +69,16 @@ function App() {
 							<Route path="/bids" element={<Bids />} />
 							<Route path="/victory" element= {<Victory/>} />
 							<Route path="/auction/:id" element={<AuctionItem />} />
-							<Route path="/bidCpo/:amount" element={<BidCpo />} />
+							<Route path="/bidCpo/:id" element={<BidCpo />} />
 							<Route path="/auction/create" element={<CreateAuctionItem />} />
 							<Route path="/auction/edit/:id" element={<EditAuctionItem />} />
 							<Route path="/auction/bid/:id" element={<BidForm />} />
 							<Route path="/fullRegistration" element={<FullRegistration />} />
 							<Route path='/userNotification' element={<UserNotification />} />
 							<Route path='/images' element={<Images />} />
+							<Route path='/payment/:id' element={<Payment/>} />
+							<Route path='/paymentsuccess/:tx_ref' element={<PaymentSuccess/>} />
+							<Route path='/add-balance' element={<AddBalance/>} />
 						</Route>
  
 						{/* ADMIN ROUTES */}

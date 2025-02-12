@@ -57,12 +57,14 @@ const UserAuction = () => {
 
     const clickCreate = () => {
         if (user.isFullyRegistered) {
+            console.log("fullyregister and waiting");
+            
             if (user.approvalStatus==="approved") {
                 navigate("/auction/create")
             } else if(user.approvalStatus === "rejected") {
                 toast.warning("you are rejected Update your profile")
                 navigate("/profile")
-            }else if(user.approvalStatus==="pending"){
+            }else if(user.approvalStatus === "pending"){
                 toast.warning("You are not approved yet!")
             }
 
@@ -86,11 +88,11 @@ const UserAuction = () => {
                 </button>
             </div>
             {paginatedAuctions.length ? (
-                <div className="flex gap-3 flex-col h-[60vh]">
+                <div className="flex gap-3 flex-col md:h-[60vh]">
                     {paginatedAuctions.map((auction) => (
                         <div
                             key={auction._id}
-                            className="overflow-hidden w-full rounded-lg shadow-md bg-gradient-to-br from-gray-800 to-gray-900 "
+                            className=" w-full rounded-lg shadow-md bg-gradient-to-br from-gray-800 to-gray-900 "
                         >
                             <div className="p-2 flex flex-col lg:flex-row justify-between lg:items-center ">
                                 <div className="aspect-h-1 aspect-w-  lg:w-20 overflow-hidden rounded-lg bg-gray-200">
@@ -103,9 +105,9 @@ const UserAuction = () => {
                                     <span className="font-semibold text-teal-400">
                                         Starting Bid:
                                     </span>{" "}
-                                    <br className='hidden lg:block'/>
+                                    {/* <br className='hidden lg:block'/> */}
                                     <span className="font-bold text-green-400">
-                                        ${auction.startingBid}
+                                        {auction.startingBid}birr
                                     </span>
                                 </p>
                                 <p className="mb-4">

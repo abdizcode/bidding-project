@@ -35,7 +35,7 @@ const AdminApp = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-cyan-700 w-full">
+    <div className="flex min-h-screen bg-cyan-700 w-full">
       <div className="flex-1 ml- bg-nature p-8">
         <h2 className="text-lg font-bold text-white">Dashboard</h2>
         <div className="grid lg:grid-cols-3 gap-6 mt-6">
