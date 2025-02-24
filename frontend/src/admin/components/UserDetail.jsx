@@ -88,71 +88,76 @@ const UserDetail = () => {
 
   return (
     <div className='bg-nature p-5 w-full text-whit'>
-      <div className='flex gap-3 md:gap-6'>
-        <div className="w-[35%]">
-          <p className='text-yellow'>National ID Image</p>
-          <img src={user?.idImage?.filename
-            ? `http://localhost:5000/images/${user?.idImage?.filename}`
-            : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
-            <a href={`http://localhost:5000/images/${user?.idImage?.filename}`} target="_blank" className="text-blue-400">View Image</a>
-        </div>
-        <div className="flex flex-col w-[35%]">
-          <p className='text-yellow'>Tax certificate Image</p>
-          <img src={user?.taxCertificate?.filename
-            ? `http://localhost:5000/images/${user?.taxCertificate?.filename}`
-            : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
-            <a href={`http://localhost:5000/images/${user?.taxCertificate?.filename}`} target="_blank" className="text-blue-400">View Image</a>
-        </div>
-        <div className="flex flex-col w-[35%]">
-          <p className='text-yellow'>Business Licence Image</p>
-          <img src={user?.businessLicense?.filename
-            ? `http://localhost:5000/images/${user?.businessLicense?.filename}`
-            : 'http://localhost:5000/images/default.jpg'} alt=""
-            className="h-48 w-  object-fit object-center group-hover:opacity-75" />
-            <a href={`http://localhost:5000/images/${user?.businessLicense?.filename}`} target="_blank" className="text-blue-400">View Image</a>
-        </div>
-      </div>
-      <div>
-        <div className="flex flex-col justify-center">
-          <h1 className="text-xl font-semibold text-gray-700 mb-4"><strong>Name:</strong> {user?.username || 'Loading...'}</h1>
-          <h1 className="text-lg font-semibold text-gray-700 mb-4"><strong>Email:</strong> {user?.email}</h1>
-          <p className="text-lg font- text-gray-700 mb-6"><strong>TIN Number: </strong>{user?.tin}</p>
-          <p className="text-lg font- text-gray-700 mb-6"><strong>Created At:</strong> {user?.createdAt}</p>
-          <p className="text-lg font- text-gray-700 mb-6"><strong>Phone Number:</strong> {user?.phone}</p>
-          <p className="text-lg font- text-gray-700 mb-6"><strong>Address:</strong> {user?.address}</p>
-
-          {/* Add to Cart Button */}
-          <div className='flex gap-2'>
-            <a href={`https://etrade.gov.et/business-license-checker?tin=${user?.tin}`} target='_blank' className="bg-yellow-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
-              Check
-            </a>
-            <button onClick={() => handleOpenDialog("approve", user)} className="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
-              Approve
-            </button>
-            <button onClick={() => handleOpenDialog("reject", user)} className="bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
-              Reject
-            </button>
-            <button onClick={() => handleOpenDialog("delete", user)} className="bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
-              Delete
-            </button>
+      {user ? (
+        <>
+          <div className='flex gap-3 md:gap-6'>
+            <div className="w-[35%]">
+              <p className='text-yellow'>National ID Image</p>
+              <img src={user?.idImage?.filename
+                ? `http://localhost:5000/images/${user?.idImage?.filename}`
+                : 'http://localhost:5000/images/default.jpg'} alt=""
+                className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
+                <a href={`http://localhost:5000/images/${user?.idImage?.filename}`} target="_blank" className="text-blue-400">View Image</a>
+            </div>
+            <div className="flex flex-col w-[35%]">
+              <p className='text-yellow'>Tax certificate Image</p>
+              <img src={user?.taxCertificate?.filename
+                ? `http://localhost:5000/images/${user?.taxCertificate?.filename}`
+                : 'http://localhost:5000/images/default.jpg'} alt=""
+                className="h-48 w-full  object-fit object-center group-hover:opacity-75" />
+                <a href={`http://localhost:5000/images/${user?.taxCertificate?.filename}`} target="_blank" className="text-blue-400">View Image</a>
+            </div>
+            <div className="flex flex-col w-[35%]">
+              <p className='text-yellow'>Business Licence Image</p>
+              <img src={user?.businessLicense?.filename
+                ? `http://localhost:5000/images/${user?.businessLicense?.filename}`
+                : 'http://localhost:5000/images/default.jpg'} alt=""
+                className="h-48 w-  object-fit object-center group-hover:opacity-75" />
+                <a href={`http://localhost:5000/images/${user?.businessLicense?.filename}`} target="_blank" className="text-blue-400">View Image</a>
+            </div>
           </div>
-        </div>
-      </div>
-      <ConfirmationDialog
-        isOpen={dialogOpen}
-        onClose={handleCloseDialog}
-        onConfirm={handleConfirm}
-        message={
-          action === "reject"
-            ? "Are you sure you want to reject this user? Provide a reason below."
-            : `Are you sure you want to ${action} this user?`
-        }
-        showReasonInput={action === "reject"}
-        reason={reason}
-        setReason={setReason}
-      />
+          <div>
+            <div className="flex flex-col justify-center">
+              <h1 className="text-xl font-semibold text-gray-700 mb-4"><strong>Name:</strong> {user?.username || 'Loading...'}</h1>
+              <h1 className="text-lg font-semibold text-gray-700 mb-4"><strong>Email:</strong> {user?.email}</h1>
+              <p className="text-lg font- text-gray-700 mb-6"><strong>TIN Number: </strong>{user?.tin||"---"}</p>
+              <p className="text-lg font- text-gray-700 mb-6"><strong>Created At:</strong> {user?.createdAt}</p>
+              <p className="text-lg font- text-gray-700 mb-6"><strong>Phone Number:</strong> {user?.phone||"---"}</p>
+              <p className="text-lg font- text-gray-700 mb-6"><strong>Address:</strong> {user?.address||"---"}</p>
+
+              <div className='flex gap-2'>
+                <a href={user?.isFullyRegistered ? `https://etrade.gov.et/business-license-checker?tin=${user?.tin}` : '#'} target={user.isFullyRegistered?'_blank':'_self'} className={`py-3 px-6 rounded-lg transition duration-300 ${user?.isFullyRegistered ? 'bg-yellow-600 text-white hover:bg-slate-700' : 'bg-gray-400 text-gray-700 cursor-not-allowed'}`}>
+                  Check
+                </a>
+                <button onClick={() => handleOpenDialog("approve", user)} className="bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300" disabled={!user?.isFullyRegistered}>
+                  Approve
+                </button>
+                <button onClick={() => handleOpenDialog("reject", user)} className="bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
+                  Reject
+                </button>
+                <button onClick={() => handleOpenDialog("delete", user)} className="bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-slate-700 transition duration-300">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+          <ConfirmationDialog
+            isOpen={dialogOpen}
+            onClose={handleCloseDialog}
+            onConfirm={handleConfirm}
+            message={
+              action === "reject"
+                ? "Are you sure you want to reject this user? Provide a reason below."
+                : `Are you sure you want to ${action} this user?`
+            }
+            showReasonInput={action === "reject"}
+            reason={reason}
+            setReason={setReason}
+          />
+        </>
+      ) : (
+        <p>Loading user details...</p>
+      )}
     </div>
   )
 }

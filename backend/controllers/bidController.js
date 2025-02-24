@@ -16,7 +16,7 @@ const placeBid = async (io, socket, data) => {
             socket.emit('bidError', { message: "Auction item not found" });
             return;
         }
-
+        
         if (bidAmount < auctionItem.startingBid) {
             socket.emit('bidError', {
                 message: "Bid amount must be greater than or equal to the starting bid",

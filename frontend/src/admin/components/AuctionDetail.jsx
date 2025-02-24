@@ -97,11 +97,19 @@ const AuctionDetail = () => {
 
     const handleDelete = async () => {
         try {
-            await axios.delete(`/api/auctions/${id}`);
+            const token = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith("jwt="))
+                ?.split("=")[1];
+
+            await axios.delete(`/api/auctions/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             toast.success("Auction item deleted successfully");
             navigate("/auctions");
         } catch (error) {
             console.error("Error deleting auction item:", error);
+            toast.error("Failed to delete auction item");
         }
     };
 

@@ -360,7 +360,7 @@ const finallPayment = async (req, res) => {
 				"callback_url": "http://localhost:5173/about",
 				"return_url": new URL(`http://localhost:5173/paymentsuccess/${tx_ref}?aucId=${auctionId}`).href,
 				"customization": {
-					"title": "Payment for",
+					"title": "final Payment",
 					"description": "Service Payment"
 				}
 			})
@@ -379,69 +379,92 @@ const finallPayment = async (req, res) => {
 }
 const cpoPayment = async (req, res) => {
 	try {
-		const { bidAmount, aucId, userId } = req.body;
-		console.log(bidAmount);
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
-		}
+		const {
+			amount, currency, email, first_name, last_name, phone_number, tx_ref, auctionId
+		} = req.body;
 
-		if (user.balance < bidAmount) {
-			return res.status(400).json({ message: "Insufficient balance" });
-		}
-		const cpoAccount = await Account.findOne({ auctionId: aucId });
-		if (cpoAccount) {
-			cpoAccount.amount += bidAmount;
-			await cpoAccount.save();
-		} else {
-			await Account.create({
-				auctionId: aucId,
-				amount: bidAmount,
-				userId: userId,
-				payedFor: "cpo",
-			});
-		}
-		user.balance -= bidAmount;
-		await user.save();
-		await User.findOneAndUpdate(
-			{ userId },
-			{
-				$push: {
-					payments: {
-						auctionId: aucId,
-						amount: bidAmount,
-						payedFor: "cpo",
-						createdAt: new Date(),
-					},
-				},
-			}
-		);
+		console.log(req.body);
+		const response = await fetch("https://api.chapa.co/v1/transaction/initialize", {
+			method: "POST",
+			headers: {
+				"Authorization": `Bearer ${process.env.CHAPA_AUTH_KEY}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				"amount": parseInt(amount ? amount : 232),
+				"currency": currency,
+				"email": email,
+				"first_name": first_name,
+				"last_name": last_name,
+				"phone_number": phone_number,
+				"tx_ref": tx_ref,
+				"callback_url": "http://localhost:5173/about",
+				"return_url": new URL(`http://localhost:5173/paymentsuccess/${tx_ref}?aucId=${auctionId}`).href,
+				"customization": {
+					"title": "cpo Payment",
+					"description": "Service Payment"
+				}
+			})
+		})
 
+		//to save the payment to the user
 
-		// if (result.status === "success") {
-		// 	// Save payment in user record
-		// 	await User.findOneAndUpdate(
-		// 		{ email: email },
-		// 		{
-		// 			$push: {
-		// 				payments: {
-		// 					auctionId: aucId,
-		// 					amount,
-		// 					payedFor: "cpo",
-		// 					createdAt: new Date(),
-		// 				},
-		// 			},
-		// 		}
-		// 	);
-		// }
+		const result = await response.json();
 
-		return res.json({ message: "Payment successful" });
+		return res.json(result);
 
 	} catch (error) {
 		console.log(error.message)
 		res.status(500).json({ error: 'Payment initialization failed on backend' });
 	}
 }
+// const cpoPayment = async (req, res) => {
+// 	try {
+// 		const { bidAmount, aucId, userId } = req.body;
+// 		console.log(bidAmount);
+// 		const user = await User.findById(userId);
+// 		if (!user) {
+// 			return res.status(404).json({ message: "User not found" });
+// 		}
+
+// 		if (user.balance < bidAmount) {
+// 			return res.status(400).json({ message: "Insufficient balance" });
+// 		}
+// 		const cpoAccount = await Account.findOne({ auctionId: aucId });
+// 		if (cpoAccount) {
+// 			cpoAccount.amount += bidAmount;
+// 			await cpoAccount.save();
+// 		} else {
+// 			await Account.create({
+// 				auctionId: aucId,
+// 				amount: bidAmount,
+// 				userId: userId,
+// 				payedFor: "cpo",
+// 			});
+// 		}
+// 		user.balance -= bidAmount;
+// 		await user.save();
+// 		await User.findOneAndUpdate(
+// 			{ userId },
+// 			{
+// 				$push: {
+// 					payments: {
+// 						auctionId: aucId,
+// 						amount: bidAmount,
+// 						payedFor: "cpo",
+// 						createdAt: new Date(),
+// 					},
+// 				},
+// 			}
+// 		);
+
+// 		return res.json({ message: "Payment successful" });
+
+// 	} catch (error) {
+// 		console.log(error.message)
+// 		res.status(500).json({ error: 'Payment initialization failed on backend' });
+// 	}
+// }
 
 const verifyTransaction = async (req, res) => {
     try {

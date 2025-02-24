@@ -14,7 +14,6 @@ const NavBar = () => {
 	const navigate = useNavigate();
 	const [selectedOption, setSelectedOption] = useState("");
 
-
 	const toggleDropdown = () => {
 		setIsOpen1(!isOpen1);
 	};
@@ -149,16 +148,15 @@ const NavBar = () => {
 									<li>
 										<div
 											className={`${user?.role === 'Admin' ? "text-white hover:text-gray-300 border px-2 rounded-lg border-purple-400" : ''} `}
-										// to={user?.role === 'Admin' ? "/admin" : "/Profile"}
 										>
-											{user?.role === 'Admin' ?
+											{user?.role === 'Admin' ? (
 												<Link to="/admin" >Dashboard</Link>
-												: <div className="relative inline-block">
+											) : (
+												<div className="relative inline-block">
 													{/* Dropdown Button */}
-													<Link onClick={toggleDropdown} className="text-white hover:text-gray-300 border px-1 rounded-lg border-purple-400 flex items-center"
-													>
+													<button onClick={toggleDropdown} className="text-white hover:text-gray-300 border px-1 rounded-lg border-purple-400 flex items-center">
 														Profile Options <RiArrowDropDownLine size={20} />
-													</Link>
+													</button>
 
 													{/* Dropdown Menu */}
 													{isOpen1 && (
@@ -192,35 +190,36 @@ const NavBar = () => {
 															</ul>
 														</div>
 													)}
-												</div>}
-
+												</div>
+											)}
 										</div>
 									</li>
 									<li>
-
 										<Link
-
+											className="text-white hover:text-gray-300 border px-2 rounded-lg border-purple-400"
 											to="/logout"
 										>
-											<button className="text-white hover:text-gray-300 border px-2 rounded-lg border-purple-400">Logout</button>
+											Logout
 										</Link>
 									</li>
 									<li className="">
 										<Link
 											className="hover:text-gray-300 px-2 flex items-center justify-between"
-											to={user.role==="Admin"?`/admin/notification`: "/userNotification"}
+											to={user.role === "Admin" ? `/admin/notification` : "/userNotification"}
 										>
 											<FaBell color="white" size={20} />
 										</Link>
 									</li>
-									{user.role != "Admin" && <li className="">
-										<button
-											className="hover:text-gray-300 flex items-center justify-between"
-											onClick={handleCreate}
-										>
-											<FaPlusCircle color="white" size={20} />
-										</button>
-									</li>}
+									{user.role !== "Admin" && (
+										<li className="">
+											<button
+												className="hover:text-gray-300 flex items-center justify-between"
+												onClick={handleCreate}
+											>
+												<FaPlusCircle color="white" size={20} />
+											</button>
+										</li>
+									)}
 								</div>
 							)}
 						</ul>
@@ -320,7 +319,6 @@ const NavBar = () => {
 							<li>
 								<div
 									className={`${user?.role === 'Admin' ? "text-white " : ''} `}
-								// to={user?.role === 'Admin' ? "/admin" : "/Profile"}
 								>
 									{user?.role === 'Admin' ? <>
 										<li>
@@ -387,18 +385,18 @@ const NavBar = () => {
 									className="hover:text-gray-300 text-white border px-2 rounded-lg border-purple-400 "
 									onClick={handleCreate}
 								>
-									<p className="flex flex-row items-center justify-between gap-2">Create Auction<FaPlusCircle color="white"/></p>
+									<p className="flex flex-row items-center justify-between gap-2">Create Auction<FaPlusCircle color="white" /></p>
 								</button>
 							</li>
 							<li className="">
 								<Link
 									className="hover:text-gray-300 flex items-center justify-between"
-									to={user.role==="Admin"?`/admin/notification`: "/userNotification"}
+									to={user.role === "Admin" ? `/admin/notification` : "/userNotification"}
 								>
 									<FaBell color="white" size={20} />
 								</Link>
 							</li>
-							
+
 						</div>
 					)}
 				</ul>

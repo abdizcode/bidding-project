@@ -6,59 +6,84 @@ const jwt = require("jsonwebtoken");
 const AuctionResult = require("../models/AuctionResult");
 
 async function scheduleAuctionEnd(auction) {
-    try {
-        const timeUntilEnd = new Date(auction.endDate) - new Date();
+	try {
+		const timeUntilEnd = new Date(auction.endDate) - new Date();
 
-        if (timeUntilEnd > 0) {
-            console.log(`Scheduling auction ${auction._id} to end in ${timeUntilEnd / 1000} seconds`);
+		if (timeUntilEnd > 0) {
+			console.log(`Scheduling auction ${auction._id} to end in ${timeUntilEnd / 1000} seconds`);
 
-            setTimeout(async () => {
-                try {
-                    const bids = await Bid.find({ auctionItemId: auction._id }).sort({ bidAmount: -1 });
-                    console.log(`Auction ${auction._id} ended! Processing winner...`);
+			setTimeout(async () => {
+				try {
+					const bids = await Bid.find({ auctionItemId: auction._id }).sort({ bidAmount: -1 });
+					console.log(`Auction ${auction._id} ended! Processing winner...`);
 
-                    if (bids.length === 0) {
-                        console.log(`No bids found for auction ${auction._id}`);
-                        return;
-                    }
+					if (bids.length === 0) {
+						console.log(`No bids found for auction ${auction._id}`);
+						return;
+					}
 
-                    let winners;
-                    if (bids.length >= 3) {
-                        const topBids = bids.slice(0, 3);
-                        winners = topBids.map((bid) => ({
-                            userId: bid.userId,
-                            amount: bid.bidAmount,
-                            status: "pending",
-                        }));
-                    } else {
-                        winners = bids.map((bid) => ({
-                            userId: bid.userId,
-                            amount: bid.bidAmount,
-                            status: "pending",
-                        }));
-                    }
+					let winners;
+					if (bids.length >= 3) {
+						const topBids = bids.slice(0, 3);
+						winners = topBids.map((bid) => ({
+							userId: bid.userId,
+							amount: bid.bidAmount,
+							status: "pending",
+						}));
+					} else {
+						winners = bids.map((bid) => ({
+							userId: bid.userId,
+							amount: bid.bidAmount,
+							status: "pending",
+						}));
+					}
+					// Refund non-winning bidders
 
-                    // Create an AuctionResult document
-                    const auctionResult = new AuctionResult({
-                        auctionId: auction._id,
-                        winners,
-                        currentWinnerIndex: 0,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    });
+					// Create an AuctionResult document
+					const auctionResult = new AuctionResult({
+						auctionId: auction._id,
+						winners,
+						currentWinnerIndex: 0,
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					});
 
-                    await auctionResult.save();
-                    console.log(`Auction ${auction._id} results stored successfully:`, auctionResult);
-                } catch (error) {
-                    console.error(`Error processing auction ${auction._id} end:`, error);
-                }
-            }, timeUntilEnd);
-        } else {
-            console.log(`Auction ${auction._id} has already ended.`);
-        }
-    } catch (error) {
-        console.error("Error scheduling auction end:", error);
-    }
+					await auctionResult.save();
+					console.log(`Auction ${auction._id} results stored successfully:`, auctionResult);
+
+					const nonWinners = bids.slice(winners.length);
+
+					for (const bid of nonWinners) {
+						try {
+							const user = await User.findById(bid.userId);
+							const payment = user.payments.find((payment) => payment.auctionId === auction._id && payment.payedFor === "cpo");
+							const tx_ref = payment.tx_ref;
+							// Assuming you have a function to process refunds
+							await fetch(`https://api.chapa.co/v1/refund/${tx_ref}`, {
+								method: "POST",
+								headers: {
+									"Authorization": `Bearer ${process.env.CHAPA_SECRET}`,
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									"reason": "accidental purchase",
+								}),
+							});
+							console.log(`Refunded ${bid.bidAmount} to user ${bid.userId} for auction ${auction._id}`);
+						} catch (refundError) {
+							console.error(`Error refunding bid ${bid._id} for auction ${auction._id}:`, refundError);
+						}
+					}
+				} catch (error) {
+					console.error(`Error processing auction ${auction._id} end:`, error);
+				}
+			}, timeUntilEnd);
+		} else {
+			console.log(`Auction ${auction._id} has already ended.`);
+		}
+	} catch (error) {
+		console.error("Error scheduling auction end:", error);
+	}
 }
 
 const createAuctionItem = async (req, res) => {
@@ -126,6 +151,18 @@ const getAuctionItemById = async (req, res) => {
 		res.status(500).json({ message: error.message });
 	}
 };
+const getTempAuctionById = async (req, res) => {
+	const { id } = req.params;
+	try {
+		const auctionItem = await AuctionItem.findById(id);
+		if (!auctionItem) {
+			return res.status(404).json({ message: "Auction item not found" });
+		}
+		res.status(200).json(auctionItem);
+	} catch (error) {
+		res.status(500).json({ message: error.message });
+	}
+};
 
 const getAuctionItemsByUser = async (req, res) => {
 	try {
@@ -180,7 +217,7 @@ const updateAuctionItem = async (req, res) => {
 const deleteAuctionItem = async (req, res) => {
 	const { id } = req.params;
 	const userId = req.user.id;
- 
+
 	try {
 		const auctionItem = await AuctionItem.findById(id);
 
@@ -201,6 +238,7 @@ const deleteAuctionItem = async (req, res) => {
 
 		res.json({ message: "Auction item removed" });
 	} catch (error) {
+		console.log(error.message);
 		res.status(500).json({ message: error.message });
 	}
 };
@@ -228,60 +266,61 @@ const getAuctionWinner = async (req, res) => {
 				.json({ winner: "", message: "No bids found" });
 		}
 
-		const isauctionResult = await AuctionResult.find({ auctionId: id })
+		// const isauctionResult = await AuctionResult.find({ auctionId: id })
 
-		if (isauctionResult.length === 0) {
+		// if (isauctionResult.length === 0) {
 
-			if (bids.length >= 3) {
-				const topBids = await Bid.find({ auctionItemId: id })
-					.sort({ bidAmount: -1 }) // Sort by bid amount in descending order
-					.limit(3); // Get top 3 bids
+		// 	if (bids.length >= 3) {
+		// 		const topBids = await Bid.find({ auctionItemId: id })
+		// 			.sort({ bidAmount: -1 }) // Sort by bid amount in descending order
+		// 			.limit(3); // Get top 3 bids
 
-				console.log(topBids)
-				const winners = topBids.map((bid) => ({
-					userId: bid.userId,
-					amount: bid.bidAmount,
-					status: "pending", // Default status for all winners
-				}));
+		// 		console.log(topBids)
+		// 		const winners = topBids.map((bid) => ({
+		// 			userId: bid.userId,
+		// 			amount: bid.bidAmount,
+		// 			status: "pending", // Default status for all winners
+		// 		}));
 
-				// Set the first winner's status to pending
-				winners[0].status = "pending";
+		// 		// Set the first winner's status to pending
+		// 		winners[0].status = "pending";
 
-				// Create an AuctionResult document
-				const auctionResult = new AuctionResult({
-					auctionId: id,
-					winners,
-					currentWinnerIndex: 0, // Start with the first winner
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
+		// 		// Create an AuctionResult document
+		// 		const auctionResult = new AuctionResult({
+		// 			auctionId: id,
+		// 			winners,
+		// 			currentWinnerIndex: 0, // Start with the first winner
+		// 			createdAt: new Date(),
+		// 			updatedAt: new Date(),
+		// 		});
 
-				await auctionResult.save();
+		// 		await auctionResult.save();
 
-				console.log("Top three bidders stored successfully:", auctionResult);
-			} else {
-				const winners = bids.map((bid) => ({
-					userId: bid.userId,
-					amount: bid.bidAmount,
-					status: "pending", // Default status for all winners
-				}));
-				const auctionResult = new AuctionResult({
-					auctionId: id,
-					winners,
-					currentWinnerIndex: 0, // Start with the first winner
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-				await auctionResult.save();
-				console.log("less than three bidders stored successfully:", auctionResult);
-			}
+		// 		console.log("Top three bidders stored successfully:", auctionResult);
+		// 	} else {
+		// 		const winners = bids.map((bid) => ({
+		// 			userId: bid.userId,
+		// 			amount: bid.bidAmount,
+		// 			status: "pending", // Default status for all winners
+		// 		}));
+		// 		const auctionResult = new AuctionResult({
+		// 			auctionId: id,
+		// 			winners,
+		// 			currentWinnerIndex: 0, // Start with the first winner
+		// 			createdAt: new Date(),
+		// 			updatedAt: new Date(),
+		// 		});
+		// 		await auctionResult.save();
+		// 		console.log("less than three bidders stored successfully:", auctionResult);
+		// 	}
 
-		}
+		// }
 
 		let highestBid = bids.reduce(
 			(max, bid) => (bid.bidAmount > max.bidAmount ? bid : max),
 			bids[0]
 		);
+
 
 		const winner = await User.findById(highestBid.userId);
 		if (!winner) {
@@ -289,8 +328,10 @@ const getAuctionWinner = async (req, res) => {
 				.status(404)
 				.json({ winner: "", message: "Winner not found" });
 		}
-
-		res.status(200).json({ winner });
+		const auctionResult = await AuctionResult.findOne({ auctionId: id });
+		const winnerPayment = auctionResult.winners.find(winner => winner.userId.toString() === winner._id.toString());
+		
+		res.status(200).json({ winner, winnerPayment });
 	} catch (error) {
 		console.error("Error fetching auction winner:", error);
 		res.status(500).json({ message: error.message });
@@ -349,4 +390,5 @@ module.exports = {
 	getAuctionItemsByUser,
 	getAuctionWinner,
 	getAuctionsWonByUser,
+	getTempAuctionById,
 };

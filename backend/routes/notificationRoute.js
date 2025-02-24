@@ -5,4 +5,4 @@ const router = express.Router();
 router.post("/allNotification", getNotifications)
 router.post("/userNotification", getNotificationByUser)
 
-module.exports = router;
+module.exports = router;  

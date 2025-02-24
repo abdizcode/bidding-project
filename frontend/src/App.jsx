@@ -35,7 +35,8 @@ import ProfileEdit from './pages/users/EditProfile'
 import BidCpo from './pages/BidCpo'
 import Payment from './components/Payment'
 import PaymentSuccess from './pages/PaymentSuccess'
-import AddBalance from './components/AddBalance'
+import PrivacyPolicy from './components/PrivacyPolicy'
+import TempDetail from './pages/TempDetail'
 
 
 function App() {
@@ -48,7 +49,6 @@ function App() {
 			<div className={`min-h-screen mx-auto bg-cyan-50`}>
 				{user?.role === 'User' ? <ComplaintForm /> : <></>}
 				<NavBar />
-
 				<Routes>
 
 					{/* PUBLIC ROUTES */}
@@ -60,6 +60,8 @@ function App() {
 						<Route path="/about" element={<About />} />
 						<Route path="/unauthorized" element={<Unauthorized />} />
 						<Route path="*" element={<NotFoundPage />} />
+						<Route path="/privacypolicy" element={<PrivacyPolicy />} />
+						<Route path="/tempDetail/:id" element={<TempDetail />} />
 
 						{/* USER ROUTES */}
 						<Route element={<ProtectedRoute allowedRole={['User']} />}>
@@ -78,7 +80,6 @@ function App() {
 							<Route path='/images' element={<Images />} />
 							<Route path='/payment/:id' element={<Payment/>} />
 							<Route path='/paymentsuccess/:tx_ref' element={<PaymentSuccess/>} />
-							<Route path='/add-balance' element={<AddBalance/>} />
 						</Route>
  
 						{/* ADMIN ROUTES */}

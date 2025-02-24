@@ -39,28 +39,6 @@ const BidCpo = () => {
     fechAuction();
   }, [])
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!bidAmount) return;
-
-  //   try {
-  //     setLoading(true);
-  //     const response = await axios.post("/api/users/cpo-payment", {
-  //       bidAmount, aucId: id, userId: user._id,
-  //     });
-
-  //     if (response) {
-  //       navigate(`/auction/${id}`);
-  //     } else {
-  //       setmessage(response.data.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("Payment initiation failed:", error);
-  //     setmessage(error.response?.data?.message || "An error occurred");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
     const tx_ref = `${Date.now()}`;
@@ -69,7 +47,7 @@ const BidCpo = () => {
     try {
         console.log(form)
 
-        const response = await fetch("/api/users/final-payment", {
+        const response = await fetch("/api/users/cpo-payment", {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
@@ -109,8 +87,7 @@ const BidCpo = () => {
           <div>
             <p>CPO Amount: <span className='text-gray-400'>{bidAmount}birr</span></p>
           </div>
-          <button type="submit"
-            className='w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-300'>Pay</button>
+          
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-300"

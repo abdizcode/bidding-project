@@ -51,8 +51,7 @@ const Profile = () => {
             {user.isFullyRegistered
               ? <></>
               : <Link to="/fullRegistration" className="mb-4 text-lg font-semibold text-gray-600 flex items-center gap-2 border border-gray-700 w-36 px-1 rounded">Register fully<FaArrowRightLong /></Link>}
-              <Link to={`/add-balance`} className="mb-4 text-lg font-semibold text-gray-600 flex items-center gap-2 border border-gray-700 w-36 px-1 rounded">Add Balance<FaPlus /></Link>
-          </div>
+              </div>
 
           <ul className="space-y-4">
             <li className="flex justify-between">
@@ -76,10 +75,6 @@ const Profile = () => {
             <li className="flex justify-between">
               <span className="font-semibold text-gray-600 text-lg">Username:</span>
               <span>{user.username}</span>
-            </li>
-            <li className="flex justify-between">
-              <span className="font-semibold text-gray-600 text-lg">Balance:</span>
-              <span>{user?.balance?.toFixed(1)}birr</span>
             </li>
             <li className="flex justify-between">
               <span className="font-semibold text-gray-600 text-lg">Role:</span>

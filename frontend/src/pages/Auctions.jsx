@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
 const ITEMS_PER_PAGE = 10;
 
 function AuctionList() {
 	const navigate = useNavigate()
+	const { user } = useAuth();
 	const [auctionItems, setAuctionItems] = useState([]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [searchResults, setSearchResults] = useState([]);
@@ -27,7 +29,7 @@ function AuctionList() {
 		const filterItems = () => {
 			const filteredItems = auctionItems.filter((item) => {
 				const title = item.title || "";
-				const description = item.description || "";
+				const address = item.address || "";
 				const startingBid = item.startingBid
 					? item.startingBid.toString()
 					: "";
@@ -40,7 +42,7 @@ function AuctionList() {
 				const matchesTitle = title
 					.toLowerCase()
 					.includes(searchTermString);
-				const matchesDescription = description
+				const matchesAddress = address
 					.toLowerCase()
 					.includes(searchTermString);
 				const matchesStartingBid =
@@ -49,7 +51,7 @@ function AuctionList() {
 
 				return (
 					matchesTitle ||
-					matchesDescription ||
+					matchesAddress ||
 					matchesStartingBid ||
 					matchesEndDate
 				);
@@ -68,6 +70,15 @@ function AuctionList() {
 			setCurrentPage(page);
 		}
 	};
+
+	const handleNavigate = (itemId) => {
+		if(user){
+			navigate(`/auction/${itemId}`);
+		}else{
+			navigate(`/tempDetail/${itemId}`);
+		}
+		
+	}
 
 	const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 	const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -104,7 +115,7 @@ function AuctionList() {
 							</thead>
 							<tbody>
 								{paginatedItems.map((item) => (
-									<tr key={item._id} className="border-b border-gray-200 hover:bg-gray-50" onClick={() => navigate(`/auction/${item._id}`)}>
+									<tr key={item._id} className="border-b border-gray-200 hover:bg-gray-50" onClick={() => handleNavigate(item._id)}>
 										<td>
 											<div className="aspect-h-1 aspect-w-1 w-14 overflow-hidden m-2 rounded-lg bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
 												<img src={`http://localhost:5000/images/${item.itemImage}`} alt="" className="h-14 w-14 object-cover object-center group-hover:opacity-75" />

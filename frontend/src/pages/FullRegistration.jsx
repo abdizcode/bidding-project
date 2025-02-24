@@ -7,11 +7,12 @@ import { useAuth } from '../context/AuthContext';
 
 const FullRegistration = () => {
     const navigate = useNavigate()
-    const { user } = useAuth()
+    const { user, fetchUser } = useAuth()
 
     useEffect(()=>{
         if(user.isFullyRegistered){
             toast.warning("you are already fully registered")
+            fetchUser()
             navigate("/profile")
         }
     })
@@ -80,7 +81,7 @@ const FullRegistration = () => {
 
                 {/* Description Field */}
                 <div>
-                    <label className="block text-gray-400">Enter Your Address</label>
+                    <label className="block text-gray-400">Enter Your Location Address</label>
                     <textarea
                         name="address"
                         onChange={handleChange}

@@ -25,7 +25,7 @@ const userSchema = mongoose.Schema({
         {
             auctionId: { type: String, required: true },
             amount: { type: Number, required: true },
-            payedFor: { type: String, enum: ["addBalance","cpo", "final"], default: "cpo" },
+            payedFor: { type: String, enum: ["cpo", "final"], default: "cpo" },
 			createdAt: { type: Date, default: new Date() },
 			tx_ref: { type: String, required: true },
         },

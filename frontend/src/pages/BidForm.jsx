@@ -67,7 +67,7 @@ const BidForm = () => {
 
 	const handleBidSubmit = (e) => {
 		e.preventDefault();
-		if (bidAmount < highestBid) return (
+		if (bidAmount <= highestBid) return (
 			setError("your bid amount is lessthan the current highest bid!!")
 		)
 		try {

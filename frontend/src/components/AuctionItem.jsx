@@ -17,6 +17,7 @@ function AuctionItem() {
 	
 	const [bids, setBids] = useState([]);
 	const [winner, setWinner] = useState("");
+	const [winnerStatus, setWinnerStatus] = useState("");
 	const [payment, setPayment] = useState(null);
 	const [countdown, setCountdown] = useState({
 		days: 0,
@@ -30,10 +31,6 @@ function AuctionItem() {
 	const [loadingBids, setLoadingBids] = useState(false);
 	const navigate = useNavigate();
 
-	const calculateBidCpo = (amounts) => {
-		return (amounts * 10) / 100;
-	}
-
 	useEffect(() => {
 
 		const fetchWinner = async () => {
@@ -41,6 +38,8 @@ function AuctionItem() {
 				try {
 					const res = await axios.get(`/api/auctions/winner/${id}`);
 					setWinner(res.data.winner);
+					setWinnerStatus(res.data.winnerPayment.status);
+					console.log(res.data.winnerPayment.status)
 				} catch (error) {
 					if (error.response.data.winner !== "") {
 						console.error("Error fetching auction winner:", error);
@@ -54,20 +53,15 @@ function AuctionItem() {
 	}, [isCountdownEnded, id])
 
 	useEffect(() => {
+		
+	});
+
+	useEffect(() => {
 		const fetchInitialData = async () => {
 			setLoadingBids(true);
 			try {
 				const auctionRes = await axios.get(`/api/auctions/${id}`);
 				setAuctionItem(auctionRes.data);
-
-				// const userRes = await axios.post("/api/users/profile", {}, {
-				//   headers: { Authorization: `Bearer ${token}` },
-				// });
-				// setUser(userRes.data);
-
-				// const bidsRes = await axios.get(`/api/bids/${id}`);
-				// setBids(bidsRes.data.sort((a, b) => b.bidAmount - a.bidAmount));
-				// Find payment for the given auctionId
 
 				const res = await axios.get(`/api/bids/${id}`);
 				const sortedBids = res.data.sort(
@@ -165,7 +159,11 @@ function AuctionItem() {
 	const paginatedBids = bids.slice(startIndex, endIndex);
 
 	if (!auctionItem || !user) {
-		return <p className="mt-10 text-center text-white">Loading...</p>;
+		return (
+            <div className="flex items-center justify-center h-screen bg-cyan-50">
+                <div className="w-32 h-32 border-t-2 border-b-2 border-purple-500 rounded-full animate-spin"></div>
+            </div>
+        );
 	}
 
 	const highestBid = bids.length > 0 ? Math.max(...bids.map((bid) => bid.bidAmount)) : 0;
@@ -345,7 +343,7 @@ function AuctionItem() {
 					</button>
 				</div>
 			)}
-			{auctionItem.createdBy !== user.id && !isCountdownEnded && user.isFullyRegistered && (
+			{auctionItem.createdBy !== user._id && !isCountdownEnded && user.isFullyRegistered && (
 				<Link
 					to={payment?`/auction/bid/${id}`:`/bidCpo/${id}`}
 					className="items-center justify-center block px-6 py-3 mt-6 text-center text-white bg-blue-700 rounded-lg ite hover:bg-blue-800"

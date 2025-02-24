@@ -9,7 +9,7 @@ const Payment = () => {
   const [amount, setAmount] = useState()
   //   const { amount } = useParams()
   const [form, setForm] = useState({
-    amount: 888,
+    amount: amount,
     currency: 'ETB',
     email: user.email,
     first_name: user.username,
@@ -20,19 +20,15 @@ const Payment = () => {
   useEffect(() => {
     const fechAuction = async () => {
       try {
-        const auctionRes = await axios.get(`/api/auctions/${id}`);
+        
         const res = await axios.get(`/api/bids/${id}`);
         const bids = res.data;
         const highestBid = Math.max(...bids.map((bid) => bid.bidAmount))
-        const endDate = new Date(auctionRes.endDate);
-        const now = new Date();
-        const timeDiff = endDate - now;
-        if (timeDiff > 0) {
-          const bidCpo = (auctionRes.startingBid * 10) / 100;
-          setAmount(bidCpo);
-        } else {
-          setAmount(highestBid);
-        }
+        setAmount(highestBid);
+        setForm((prevForm) => ({
+          ...prevForm,
+          amount: highestBid,
+        }));
 
       } catch (error) {
         console.error(error)
@@ -41,27 +37,31 @@ const Payment = () => {
     fechAuction();
   }, [])
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const tx_ref = `${form.first_name}-${Date.now()}`;
-
+    
     try {
-      // const res = await axios.post('/api/users/accept-payment', {
-      //   ...form,
-      //   tx_ref,
-      // });
 
       console.log(form)
-
+      const res = await axios.get(`/api/bids/${id}`);
+        const bids = res.data;
+        const highestBid = Math.max(...bids.map((bid) => bid.bidAmount))
+        setAmount(highestBid);
+        setForm((prevForm) => ({
+          ...prevForm,
+          amount: highestBid,
+        }));
+      // Perform any additional logic before making the payment request
       const response = await fetch("/api/users/final-payment", {
         method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           ...form,
-          tx_ref
+          tx_ref,
+          auctionId: id,
         }),
       })
 

@@ -1,29 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const PaymentSuccess = () => {
     const navigate = useNavigate();
     const { tx_ref } = useParams();
     const location = useLocation();
-    
+    const { fetchUser } = useAuth();
+
     const [loading, setLoading] = useState(true);
     const [transactionStatus, setTransactionStatus] = useState(null);
+
 
     // Function to get query parameters
     const getQueryParams = (search) => {
         return new URLSearchParams(search);
     };
-
+    const queryParams = getQueryParams(location.search);
+    const auctionId = queryParams.get('aucId');
     useEffect(() => {
         const checkTransaction = async () => {
-            const queryParams = getQueryParams(location.search);
-            const auctionId = queryParams.get('aucId');
+
             console.log(tx_ref, auctionId);
 
             try {
                 // const response = await axios.post(`/api/users/verifyTransaction/${tx_ref}`);
-                
+
                 const response = await fetch("/api/users/verifyTransaction", {
                     method: "POST",
                     headers: {
@@ -35,7 +38,7 @@ const PaymentSuccess = () => {
                     }),
                 });
                 console.log(response);
-                
+
                 setTransactionStatus(response.status);
             } catch (error) {
                 console.error('Error checking transaction:', error);
@@ -48,7 +51,8 @@ const PaymentSuccess = () => {
     }, [tx_ref, location.search]);
 
     const handleGoBack = () => {
-        navigate("/profile");
+        fetchUser();
+        navigate(`/auction/${auctionId}`);
     };
 
     if (loading) {

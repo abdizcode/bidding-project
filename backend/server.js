@@ -15,11 +15,11 @@ connectDB();
 
 const app = express();
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.ORIGIN);
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', process.env.ORIGIN);
+//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//   next();
+// });
 
 app.use(express.json());
 app.use(cookieParser());
@@ -35,6 +35,8 @@ app.use("/api/auctions", require("./routes/auctionRoutes"));
 app.use("/api/bids", require("./routes/bidRoutes"));
 app.use("/api/notification", require("./routes/notificationRoute"));
 app.use('/images', express.static('uploads'))
+
+
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
